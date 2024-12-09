@@ -1,1 +1,1 @@
-{"root":["./src/app.ts","./src/index.ts"],"version":"5.7.2"}
+{"root":["./src/app.ts","./src/index.ts","./src/controllers/walletcontroller.ts","./src/routes/walletroute.ts","./src/services/walletservice.ts"],"version":"5.7.2"}
