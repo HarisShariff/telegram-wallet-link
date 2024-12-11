@@ -109,7 +109,7 @@ sequenceDiagram
         Telegram Bot --) user: enter password
         user ->> Telegram Bot: password (TLS)
         Telegram Bot ->> Telegram Bot: hash password
-        Telegram Bot ->> KMS: create account
+        Telegram Bot ->> KMS: create account (api/create)
         KMS ->> KDF Function: generate symmetric cryptographic key (SCK)
         KDF Function --) KMS: return key
         KMS -->> Intermediary Table (MongoDB): encrypt with KMS PK and store SCK mapping to user id
@@ -118,6 +118,38 @@ sequenceDiagram
         Database (RDS) --) KMS: return success
         KMS --) Telegram Bot: account created
         Telegram Bot --) user: account created
+    end
+
+    par Sending Money
+        user ->> Telegram Bot: /send 0x11a0 <- tg username
+        Telegram Bot --) user: enter password
+        user ->> Telegram Bot: password (TLS)
+        Telegram Bot ->> Telegram Bot: hash password
+        Telegram Bot ->> KMS: process request (api/transfer)
+        KMS ->> KDF Function: generate symmetric cryptographic key (SCK)
+        KDF Function --) KMS: return key
+        KMS ->> Database (RDS): get 0x11a0's public key
+        Database (RDS) --) KMS: return public key
+        KMS ->> KMS: sign & execute transaction
+        KMS --) Telegram Bot: completed
+        Telegram Bot --) user: success
+    end
+
+    par Reset Password
+        user ->> Telegram Bot: /forgot-password
+        Telegram Bot --) user: enter OTP sent to Telegram
+        user ->> Telegram Bot: enter and send OTP
+        Telegram Bot ->> Telegram Bot: validate OTP
+        Telegram Bot --) user: request new password
+        user ->> Telegram Bot: enter and send new password
+        Telegram Bot ->> KMS: request change password (api/update-password)
+        KMS ->> KDF Function: generate symmetric cryptographic key (SCK)
+        KDF Function --) KMS: return key
+        KMS ->> Intermediary Table (MongoDB): decrypt stored private key
+        Intermediary Table (MongoDB) ->> Intermediary Table (MongoDB): store newly SCK-encrypted private key
+        Intermediary Table (MongoDB) --) KMS: return success
+        KMS --) Telegram Bot: success
+        Telegram Bot --) user: success
     end
 ```
 
