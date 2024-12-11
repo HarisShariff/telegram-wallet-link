@@ -1,13 +1,17 @@
 import Web3 from "web3";
-import crypto from "crypto";
+import crypto, { hash } from "crypto";
 import argon2 from "argon2";
 import { saveToMongoDB, saveToPostgres } from "../utils/databaseUtils";
+import {
+  getWalletByTelegramID,
+  getWalletByTelegramHandle,
+  performTransfer,
+} from "../utils/walletUtils";
+import web3 from "../utils/web3Instance";
 
 const rawKmsPublicKey = process.env.KMS_PUBLIC_KEY || "public_key";
 const KMS_PUBLIC_KEY = rawKmsPublicKey.replace(/\\n/g, "\n"); // Replace \n with actual newlines
 console.log(KMS_PUBLIC_KEY);
-
-const web3 = new Web3();
 
 export const createWallet = async ({
   passwordHash,
@@ -75,5 +79,59 @@ export const createWallet = async ({
   } catch (error) {
     console.error("Error creating wallet:", error);
     throw new Error("Failed to create wallet.");
+  }
+};
+
+export const checkFunds = async (
+  telegramID: string,
+  amount: number,
+  currency: string
+) => {
+  // Fetch wallet details from the database to get the public key (address)
+  const wallet = await getWalletByTelegramID(telegramID);
+  if (!wallet) {
+    throw new Error("Wallet not found");
+  }
+
+  const walletAddress = wallet.public_key;
+
+  // Check balance on the blockchain
+  const balanceWei = await web3.eth.getBalance(walletAddress);
+  const balanceEther = web3.utils.fromWei(balanceWei, "ether");
+
+  console.log(`Balance for ${walletAddress}: ${balanceEther} ${currency}`);
+
+  // Ensure enough balance for the transaction
+  return parseFloat(balanceEther) >= amount;
+};
+
+export const getWalletAddress = async (telegramHandle: string) => {
+  const wallet = await getWalletByTelegramHandle(telegramHandle);
+  return wallet ? wallet.public_key : null;
+};
+
+export const transferFunds = async (
+  senderTelegramID: string,
+  recipientWalletAddress: string,
+  amount: number,
+  currency: string,
+  hashedPassword: string
+) => {
+  try {
+    const transferResult = await performTransfer(
+      senderTelegramID,
+      recipientWalletAddress,
+      amount,
+      currency,
+      hashedPassword
+    );
+    return { success: true };
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Error transferring funds:", error);
+      return { success: false, error: error.message };
+    } else {
+      return { success: false, error: "server error" };
+    }
   }
 };

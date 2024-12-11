@@ -1,5 +1,6 @@
 import app from "./app";
 import mongoose from "mongoose";
+import web3 from "./utils/web3Instance";
 
 const PORT = process.env.PORT || 3000;
 
@@ -23,6 +24,19 @@ mongoose.connection.on("disconnected", () => {
   console.warn("MongoDB connection lost");
 });
 
+// Function to verify Web3 connection
+const testWeb3Connection = async () => {
+  try {
+    const clientVersion = await web3.eth.getNodeInfo();
+  } catch (error) {
+    console.error("Error connecting to blockchain:", error);
+    throw new Error(
+      "Failed to connect to blockchain. Ensure Ganache or RPC is running."
+    );
+  }
+};
+
 app.listen(PORT, () => {
+  testWeb3Connection();
   console.log(`KMS service is running on port ${PORT}`);
 });
