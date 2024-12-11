@@ -16,11 +16,14 @@
     "argon2": "^0.41.1",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "mongoose": "^8.8.4",
+    "pg": "^8.13.1",
     "web3": "^4.16.0",
     "whatwg-url": "^14.1.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
+    "@types/pg": "^8.11.10",
     "nodemon": "^3.1.7",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2"

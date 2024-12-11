@@ -1,6 +1,7 @@
 import Web3 from "web3";
 import crypto from "crypto";
 import argon2 from "argon2";
+import { saveToMongoDB, saveToPostgres } from "../utils/databaseUtils";
 
 const rawKmsPublicKey = process.env.KMS_PUBLIC_KEY || "public_key";
 const KMS_PUBLIC_KEY = rawKmsPublicKey.replace(/\\n/g, "\n"); // Replace \n with actual newlines
@@ -8,13 +9,25 @@ console.log(KMS_PUBLIC_KEY);
 
 const web3 = new Web3();
 
-export const createWallet = async (password: string) => {
+export const createWallet = async ({
+  passwordHash,
+  telegramID,
+  telegramHandle,
+  mobile,
+  email,
+}: {
+  passwordHash: string;
+  telegramID: string;
+  telegramHandle: string;
+  mobile: string;
+  email: string;
+}) => {
   try {
     // Step 1: Generate a unique salt for the user
     const salt = crypto.randomBytes(16);
 
     // Step 2: Derive SCK using Argon2 with raw output
-    const sck = await argon2.hash(password, {
+    const sck = await argon2.hash(passwordHash, {
       type: argon2.argon2id,
       salt,
       memoryCost: 2 ** 16, // 64 MB of memory
@@ -38,13 +51,22 @@ export const createWallet = async (password: string) => {
       .publicEncrypt(KMS_PUBLIC_KEY, sck)
       .toString("hex");
 
-    // Step 6: Simulate saving to database
-    console.log("Saving to DB:");
-    console.log(`Address: ${account.address}`);
-    console.log(`Encrypted Private Key: ${encryptedPrivateKey}`);
-    console.log(`Encrypted SCK: ${encryptedSCK}`);
-    console.log(`Salt: ${salt.toString("hex")}`);
-    console.log(`IV: ${iv.toString("hex")}`);
+    // Step 6: Save encrypted SCK to MongoDB
+    await saveToMongoDB({ telegramID, encryptedSCK });
+
+    // Step 7: Save user information to PostgreSQL
+    await saveToPostgres({
+      telegramID,
+      telegramHandle,
+      mobile,
+      email,
+      publicKey: account.address,
+      encryptedPrivateKey,
+      salt: salt.toString("hex"),
+      iv: iv.toString("hex"),
+    });
+
+    console.log("Data saved successfully to MongoDB and PostgreSQL");
 
     return {
       address: account.address,
