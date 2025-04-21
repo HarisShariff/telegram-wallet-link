@@ -36,7 +36,7 @@ The KMS is part of a system that allows Telegram users to:
 
 2. **Transport Security**:
 
-   - All communications between the Telegram bot and the backend are encrypted with HTTPS/TLS to prevent eavesdropping.
+   - All communications between the Telegram bot and the backend are encrypted with HTTPS/TLS to prevent eavesdropping. (Not yet implemented - PoC)
 
 3. **KMS-Assisted Recovery**:
 
@@ -47,10 +47,10 @@ The KMS is part of a system that allows Telegram users to:
 
 4. **Rate-Limiting and Abuse Prevention**:
 
-   - Implement rate-limiting for recovery requests to prevent brute-force attacks on encrypted symmetric keys.
+   - Implement rate-limiting for recovery requests to prevent brute-force attacks on encrypted symmetric keys. (Not yet implemented - PoC)
 
 5. **Audit Logging**:
-   - All recovery and decryption actions are logged for monitoring and forensic analysis.
+   - All recovery and decryption actions are logged for monitoring and forensic analysis. (Not yet implemented - PoC)
 
 ---
 
